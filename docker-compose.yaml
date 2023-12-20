@@ -1,0 +1,15 @@
+---
+version: '3.4'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "finance"]
+      interval: 5s
+      retries: 5
+    env_file:
+      - local.env
