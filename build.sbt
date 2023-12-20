@@ -1,4 +1,4 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.0"
 
 ThisBuild / scalaVersion := "3.3.1"
 
@@ -11,7 +11,7 @@ lazy val root = (project in file("."))
     organization    := "com.finance",
     scalaVersion    := "3.3.1"
   )),
-    name := "finance-api",
+    name := "bank-api",
 
 libraryDependencies ++= Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % "1.9.4",
