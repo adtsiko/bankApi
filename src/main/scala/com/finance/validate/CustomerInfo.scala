@@ -9,7 +9,7 @@ import org.http4s.circe.CirceEntityCodec.*
 import sttp.tapir.*
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.circe.*
-import com.finance.Models.Decoders.{Customer, PostCodeValidate, User, addressDecoder}
+import com.finance.Models.Decoders.{Customer, ErrorMessage, PostCodeValidate, User, addressDecoder}
 import com.finance.Query.client.{addNewUser, fetchUser}
 import com.github.f4b6a3.uuid.UuidCreator
 import doobie.hikari.HikariTransactor
@@ -40,7 +40,7 @@ object CustomerInfo {
     } yield result
   }
 
-  def checkCustomer(user: Customer)(using Resource[IO, Client[IO]], Resource[IO, HikariTransactor[IO]], Logger[IO]): IO[String] = {
+  def checkCustomer(user: Customer)(using Resource[IO, Client[IO]], Resource[IO, HikariTransactor[IO]], Logger[IO]): IO[Either[ErrorMessage, Int]] = {
     val psVal = validatePostCode(user.postCode)
     for {
       a <- psVal
@@ -49,7 +49,7 @@ object CustomerInfo {
 
   }
 
-  def fetchCustomer(userId: String)(using Resource[IO, HikariTransactor[IO]]): IO[User] = {
+  def fetchCustomer(userId: String)(using Resource[IO, HikariTransactor[IO]]): IO[Either[ErrorMessage, User]] = {
     fetchUser(userId)
   }
 

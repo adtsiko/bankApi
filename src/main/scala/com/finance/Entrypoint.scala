@@ -4,7 +4,7 @@ import cats.effect.*
 import cats.syntax.all.*
 import com.finance.validate.CustomerInfo.{checkCustomer, fetchCustomer}
 import com.finance.Initialise.given
-import com.finance.Models.Decoders.{Customer, User}
+import com.finance.Models.Decoders.{Customer, ErrorMessage, User}
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
@@ -19,19 +19,22 @@ import scala.concurrent.ExecutionContext
 
 object Entrypoint extends IOApp {
 
-  val getUsers: PublicEndpoint[String, Unit, User, Any] = endpoint.get
+  val getUsers: PublicEndpoint[String, ErrorMessage, User, Any] = endpoint.get
+    .errorOut(jsonBody[ErrorMessage])
     .in("customers" / "get")
     .in(query[String]("userid"))
     .out(jsonBody[User])
 
 
-  val createUser: PublicEndpoint[Customer, Unit, String, Any] = endpoint.post
+  val createUser: PublicEndpoint[Customer, ErrorMessage, Int, Any] = endpoint.post
+    .errorOut(jsonBody[ErrorMessage])
     .in("customer" / "add")
     .in(
       jsonBody[Customer]
         .description("New Customer")
     )
-    .out(jsonBody[String])
+    .out(jsonBody[Int])
+
 
   // server-side logic
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
@@ -39,17 +42,16 @@ object Entrypoint extends IOApp {
 
   val addCustomerRoutes: HttpRoutes[IO] =
     Http4sServerInterpreter[IO]().toRoutes{
-      createUser.serverLogicSuccess { user =>
+      createUser.serverLogic { user =>
         for {
           res <- checkCustomer(user)
         } yield res
-
       }
       }
 
   val getUsersRoutes: HttpRoutes[IO] =
     Http4sServerInterpreter[IO]().toRoutes{
-      getUsers.serverLogicSuccess { userId =>
+      getUsers.serverLogic { userId =>
         fetchCustomer(userId)
 
       }}
