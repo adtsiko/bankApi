@@ -4,7 +4,7 @@ ThisBuild / scalaVersion := "3.3.1"
 
 val http4sVersion = "0.23.24"
 val http4sBlazerVersion = "0.23.9"
-
+val doobieVersion = "1.0.0-RC4"
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(List(
