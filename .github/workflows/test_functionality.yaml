@@ -34,7 +34,6 @@ jobs:
         uses: insightsengineering/coverage-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          action: check
           path: "./target/scala-3.3.1/scoverage-report/scoverage.xml"
           threshold: 75
           fail: true
