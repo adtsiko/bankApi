@@ -33,7 +33,7 @@ jobs:
       - name: Code Coverage Summary Report
         uses: insightsengineering/coverage-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.COVERAGE_TOKEN }}
           path: "./target/scala-3.3.1/coverage-report/cobertura.xml"
           threshold: 75
           fail: true
