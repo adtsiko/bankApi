@@ -36,19 +36,18 @@ object Initialise {
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
-
   def initialiseDb()(using db: Resource[IO, HikariTransactor[IO]]): IO[Unit] = {
 
-    db.use {
-
-      xa =>
-        for {
-          _ <- IO(println("Initialising DB......"))
-          sqlFileContent <- IO(Source.fromResource("sql/initialisation.sql").mkString)
-          sqlString = Fragment.const(sqlFileContent).update
-          _ <- sqlString.run.transact(xa)
-          _ <- IO(println("DB Initialisation complete..."))
-        } yield ()
+    db.use { xa =>
+      for {
+        _ <- IO(println("Initialising DB......"))
+        sqlFileContent <- IO(
+          Source.fromResource("sql/initialisation.sql").mkString
+        )
+        sqlString = Fragment.const(sqlFileContent).update
+        _ <- sqlString.run.transact(xa)
+        _ <- IO(println("DB Initialisation complete..."))
+      } yield ()
     }
   }
 

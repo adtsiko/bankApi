@@ -7,7 +7,7 @@ import java.util.UUID
 object Decoders {
 
   case class PostCodeValidate(postCode: String, region: String)
-  
+
   implicit val addressDecoder: Decoder[PostCodeValidate] = json =>
     for {
       postCode <- json.downField("result").get[String]("postcode")
