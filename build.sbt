@@ -6,11 +6,13 @@ val http4sVersion = "0.23.24"
 val http4sBlazerVersion = "0.23.9"
 val doobieVersion = "1.0.0-RC4"
 val testContainerVersion = "0.40.12"
+
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(List(
     organization    := "com.finance",
-    scalaVersion    := "3.3.1"
+    scalaVersion    := "3.3.1",
+    coverageDataDir := "custom-test"
   )),
     name := "bank-api",
 
