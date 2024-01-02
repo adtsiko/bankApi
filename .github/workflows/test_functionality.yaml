@@ -23,11 +23,11 @@ jobs:
         run: sbt coverage test
       - name: Coverage Report
         run: sbt coverageReport
-      - name: list
-        run: ls
+      - name: mv report
+        run: mv target/scala-3.3.1/scoverage-report/scoverage.xml ./github/workspace/
       - name: Code Coverage Summary Report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: ./home/runner/work/bankApi/bankApi/target/scala-3.3.1/scoverage-report/scoverage.xml
+          filename: scoverage.xml
 
 
