@@ -31,8 +31,10 @@ jobs:
       - name: Coverage Report
         run: sbt coverageReport
       - name: Code Coverage Summary Report
-        uses: irongut/CodeCoverageSummary@v1.3.0
+        uses: OpenClassrooms/coverage-checker@v1.0.0
         with:
-          filename: /target/scala-3.3.1/scoverage-report/scoverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          action: check
+          files: "./target/scala-3.3.1/scoverage-report/scoverage.xml"
 
 
