@@ -35,6 +35,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           action: check
-          files: "./target/scala-3.3.1/scoverage-report/scoverage.xml"
+          coverage-file: "./target/scala-3.3.1/scoverage-report/scoverage.xml"
 
 
