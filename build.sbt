@@ -12,7 +12,6 @@ lazy val root = (project in file("."))
     inThisBuild(List(
     organization    := "com.finance",
     scalaVersion    := "3.3.1",
-    coverageDataDir := "custom-test"
   )),
     name := "bank-api",
 
