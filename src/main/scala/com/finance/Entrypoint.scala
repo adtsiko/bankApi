@@ -2,9 +2,15 @@ package com.finance
 
 import cats.effect.*
 import cats.syntax.all.*
-import com.finance.validate.CustomerInfo.{checkCustomer, fetchCustomer}
-import com.finance.Initialise.given
-import com.finance.Models.Decoders.{Customer, ErrorMessage, User}
+import com.finance.validate.CustomerInfo.{addCustomer, fetchCustomer}
+import com.finance.Initialise.{initialiseDb, given}
+import doobie.Fragment
+import doobie.implicits.*
+import cats.effect.unsafe.implicits.global
+
+import scala.io.Source
+import com.finance.Models.UserEntities.{ClientErrorMessage, Customer, ExistingClient}
+import doobie.hikari.HikariTransactor
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
@@ -19,15 +25,15 @@ import scala.concurrent.ExecutionContext
 
 object Entrypoint extends IOApp {
 
-  val getUsers: PublicEndpoint[String, ErrorMessage, User, Any] = endpoint.get
-    .errorOut(jsonBody[ErrorMessage])
+  val getUsers: PublicEndpoint[String, ClientErrorMessage, ExistingClient, Any] = endpoint.get
+    .errorOut(jsonBody[ClientErrorMessage])
     .in("customers" / "get")
     .in(query[String]("userid"))
-    .out(jsonBody[User])
+    .out(jsonBody[ExistingClient])
 
 
-  val createUser: PublicEndpoint[Customer, ErrorMessage, Int, Any] = endpoint.post
-    .errorOut(jsonBody[ErrorMessage])
+  val createUser: PublicEndpoint[Customer, ClientErrorMessage, Int, Any] = endpoint.post
+    .errorOut(jsonBody[ClientErrorMessage])
     .in("customer" / "add")
     .in(
       jsonBody[Customer]
@@ -44,7 +50,7 @@ object Entrypoint extends IOApp {
     Http4sServerInterpreter[IO]().toRoutes{
       createUser.serverLogic { user =>
         for {
-          res <- checkCustomer(user)
+          res <- addCustomer(user)
         } yield res
       }
       }
@@ -63,7 +69,6 @@ object Entrypoint extends IOApp {
 
   val routes: HttpRoutes[IO] = getUsersRoutes <+> addCustomerRoutes <+> swaggerUIRoutes
 
-
   override def run(args: List[String]): IO[ExitCode] = {
     // starting the server
     BlazeServerBuilder[IO]
@@ -71,10 +76,12 @@ object Entrypoint extends IOApp {
       .bindHttp(8080, "localhost")
       .withHttpApp(Router("/" -> (routes)).orNotFound)
       .resource
-      .use { client =>
+      .use { _ =>
+
         IO {
+          initialiseDb().unsafeRunSync()
           println("Go to: http://localhost:8080/docs")
-          println("Press any key to exit ...")
+          println(s"Press any key to exit ...")
           scala.io.StdIn.readLine()
         }
       }

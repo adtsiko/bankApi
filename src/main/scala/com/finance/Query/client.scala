@@ -2,7 +2,8 @@ package com.finance.Query
 
 import cats.effect.kernel.Outcome.{Errored, Succeeded}
 import cats.effect.{IO, Resource}
-import com.finance.Models.Decoders.{Customer, ErrorMessage, User}
+import com.finance.Models.Decoders.addressDecoder
+import com.finance.Models.UserEntities.{ClientErrorMessage, ExistingClient, NewClient}
 import com.github.f4b6a3.uuid.UuidCreator
 import doobie.Update
 import doobie.hikari.HikariTransactor
@@ -12,33 +13,28 @@ import java.util.UUID
 
 
 object client {
-  /**
-   * @param user
-   * @param xa
-   * @return
-   */
-  def addNewUser(user: Customer)(using xa: Resource[IO, HikariTransactor[IO]]): IO[Either[ErrorMessage, Int]] = {
-    val userId: UUID = UuidCreator.getNameBasedSha1(s"${user.firstName}${user.lastName}${user.emailAddress}${user.firstLineAddress}${user.SecondLineAddress}")
-    xa.use{
-      client => for{
-        query <- IO(s"INSERT INTO users (userid, name, emailaddress, region, age, creditscore) VALUES(${userId} ? ? ? ? ?)")
-        b <- Update[Customer](query).run(user).transact(client).attemptSomeSqlState( _ => ErrorMessage("User unknown"))
-      } yield b
+
+  def addNewUser(user: NewClient)(using db: Resource[IO, HikariTransactor[IO]]): IO[Either[ClientErrorMessage, Int]] = {
+      db.use{
+        xa => for{
+        query <- IO("INSERT INTO users (userid, name, emailaddress, region, age, creditscore) VALUES(?, ?, ?, ?, ?, ?)")
+        b <- Update[NewClient](query).run(user).transact(xa).attempt
+        commitUserStatus = b.left.map(e => ClientErrorMessage(s"Failed: $e"))
+
+      } yield commitUserStatus
 
     }
   }
 
-  def fetchUser(userId: String)(using xa: Resource[IO, HikariTransactor[IO]]): IO[Either[ErrorMessage, User]]= {
+  def fetchUser(userId: String)(using xa: Resource[IO, HikariTransactor[IO]]): IO[Either[ClientErrorMessage, ExistingClient]]= {
     xa.use {
       client =>
         for {
-          query <- IO(sql"SELECT * FROM users where userid=$userId".query[User].option)
+          query <- IO(sql"SELECT * FROM users where userid=$userId".query[ExistingClient].option)
           userOutput <- query.transact(client)
 
-          b = userOutput match {
-            case Some(a) => Right(a)
-            case _ => Left(ErrorMessage("User unknown"))
-          }
+          b = userOutput.toRight(ClientErrorMessage(s"User unknown"))
+
         } yield b
 
     }

@@ -5,6 +5,7 @@ ThisBuild / scalaVersion := "3.3.1"
 val http4sVersion = "0.23.24"
 val http4sBlazerVersion = "0.23.9"
 val doobieVersion = "1.0.0-RC4"
+val testContainerVersion = "0.40.12"
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(List(
@@ -27,13 +28,20 @@ libraryDependencies ++= Seq(
   "org.http4s" %% "http4s-blaze-client" % http4sBlazerVersion,
   "org.http4s" %% "http4s-circe"        % http4sVersion,
   "org.tpolecat" %% "doobie-core"      % "1.0.0-RC4",
-  "org.tpolecat" %% "doobie-h2"        % "1.0.0-RC4",          // H2 driver 1.4.200 + type mappings.
-  "org.tpolecat" %% "doobie-hikari"    % "1.0.0-RC4",          // HikariCP transactor.
+  "org.tpolecat" %% "doobie-h2"        % "1.0.0-RC4",
+  "org.tpolecat" %% "doobie-hikari"    % "1.0.0-RC4",
   "org.tpolecat" %% "doobie-postgres"  % "1.0.0-RC4",
   "com.typesafe" %  "config"           % "1.4.2",
   "com.github.f4b6a3" % "uuid-creator" % "5.3.3",
-  "org.typelevel" %% "log4cats-core"    % "2.5.0",  // Only if you want to Support Any Backend
-  "org.typelevel" %% "log4cats-slf4j"   % "2.5.0",  // Direct Slf4j Support - Recommended
+  "org.typelevel" %% "log4cats-core"    % "2.5.0",
+  "org.typelevel" %% "log4cats-slf4j"   % "2.5.0",
+  "org.scalatest" %% "scalatest" % "3.2.15",
+  "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+  "com.dimafeng" %% "testcontainers-scala" % testContainerVersion,
+  "com.dimafeng" %% "testcontainers-scala-postgresql" % testContainerVersion,
+  "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainerVersion % "test",
+  "com.dimafeng" %% "testcontainers-scala-mysql" % testContainerVersion % "test",
+  "org.postgresql" % "postgresql" % "42.5.4"
 
 )
 )
