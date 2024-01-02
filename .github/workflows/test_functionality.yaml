@@ -31,10 +31,13 @@ jobs:
       - name: Coverage Report
         run: sbt coverageReport
       - name: Code Coverage Summary Report
-        uses: OpenClassrooms/coverage-checker@v1.0.0
+        uses: insightsengineering/coverage-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           action: check
           coverage-file: "./target/scala-3.3.1/scoverage-report/scoverage.xml"
+          threshold: 75
+          fail: true
+          coverage-summary-title: "Code Coverage Summary"
 
 
