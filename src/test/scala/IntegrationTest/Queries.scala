@@ -1,7 +1,7 @@
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import com.finance.Query.client.addNewUser
+import com.finance.Query.postgres.addNewUser
 import com.finance.Models.UserEntities.{
   Customer,
   ExistingClient,
