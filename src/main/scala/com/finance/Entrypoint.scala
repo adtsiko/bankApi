@@ -88,8 +88,7 @@ object Entrypoint extends IOApp {
       .withHttpApp(Router("/" -> (routes)).orNotFound)
       .resource
       .use { _ =>
-
-          initialiseDb() >> IO.never.as(ExitCode.Success)
+        initialiseDb() >> IO.never.as(ExitCode.Success)
 //          println("Go to: http://0.0.0.0:8080/docs")
 //          IO.never[Unit].unsafeRunSync()
 

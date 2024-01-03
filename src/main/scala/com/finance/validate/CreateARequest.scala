@@ -11,9 +11,9 @@ import io.circe.parser.decode
 object CreateARequest {
 
   def getJsonRequest[A](uri: Uri)(using
-                                         httpClient: Resource[IO, Client[IO]],
-                                         logger: Logger[IO],
-                                         decoder: Decoder[A]
+      httpClient: Resource[IO, Client[IO]],
+      logger: Logger[IO],
+      decoder: Decoder[A]
   ): IO[Either[ClientErrorMessage, A]] = {
     for {
       resp <- httpClient.use { client =>
@@ -27,7 +27,11 @@ object CreateARequest {
               )
             } else {
               // Unsuccessful response, return an error
-              Left(ClientErrorMessage(s"Received unsuccessful response: ${response.status.code}"))
+              Left(
+                ClientErrorMessage(
+                  s"Received unsuccessful response: ${response.status.code}"
+                )
+              )
             }
           }
         }
