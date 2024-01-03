@@ -15,7 +15,7 @@ import doobie.implicits.*
 
 import java.util.UUID
 
-object client {
+object postgres {
 
   def addNewUser(user: NewClient)(using
       db: Resource[IO, HikariTransactor[IO]]

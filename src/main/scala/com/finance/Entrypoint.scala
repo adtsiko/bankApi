@@ -84,17 +84,16 @@ object Entrypoint extends IOApp {
     // starting the server
     BlazeServerBuilder[IO]
       .withExecutionContext(ec)
-      .bindHttp(8080, "localhost")
+      .bindHttp(8080, "0.0.0.0")
       .withHttpApp(Router("/" -> (routes)).orNotFound)
       .resource
       .use { _ =>
-        IO {
-          initialiseDb().unsafeRunSync()
-          println("Go to: http://localhost:8080/docs")
-          println(s"Press any key to exit ...")
-          scala.io.StdIn.readLine()
-        }
+
+          initialiseDb() >> IO.never.as(ExitCode.Success)
+//          println("Go to: http://0.0.0.0:8080/docs")
+//          IO.never[Unit].unsafeRunSync()
+
       }
-      .as(ExitCode.Success)
+
   }
 }

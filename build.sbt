@@ -7,12 +7,16 @@ val http4sBlazerVersion = "0.23.9"
 val doobieVersion = "1.0.0-RC4"
 val testContainerVersion = "0.40.12"
 
+
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(
       List(
         organization := "com.finance",
-        scalaVersion := "3.3.1"
+        scalaVersion := "3.3.1",
+        mainClass in Compile := Some("com.finance.Entrypoint"),
+        dockerBaseImage       := "eclipse-temurin:11",
+        dockerExposedPorts    := Seq(8080)
       )
     ),
     name := "bank-api",
@@ -44,5 +48,7 @@ lazy val root = (project in file("."))
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainerVersion % "test",
       "com.dimafeng" %% "testcontainers-scala-mysql" % testContainerVersion % "test",
       "org.postgresql" % "postgresql" % "42.5.4"
-    )
+    ),
+
   )
+enablePlugins(JavaAppPackaging, DockerPlugin)

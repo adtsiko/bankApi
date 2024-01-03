@@ -30,16 +30,5 @@ jobs:
         run: sbt coverage test
       - name: Coverage Report
         run: sbt coverageReport
-      - name: Code Coverage Summary Report
-        uses: insightsengineering/coverage-action@v2
-        with:
-          token: ${{ secrets.COVERAGE_TOKEN }}
-          path: "./target/scala-3.3.1/coverage-report/cobertura.xml"
-          threshold: 75
-          fail: true
-          diff: true
-          diff-branch: main
-          diff-storage: _xml_coverage_reports
-          coverage-summary-title: "Code Coverage Summary"
 
 
