@@ -3,7 +3,7 @@ package com.finance.validate
 import cats.effect.{IO, *}
 import org.http4s.client.Client
 import org.http4s.{Method, Request, Uri}
-import org.http4s.implicits._
+import org.http4s.implicits.*
 import io.circe.{Decoder, HCursor, Json}
 import io.circe.generic.auto.*
 import org.http4s.circe.CirceEntityCodec.*
@@ -11,13 +11,9 @@ import sttp.tapir.*
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.circe.*
 import com.finance.Models.Decoders.{PostCodeValidate, addressDecoder}
-import com.finance.Models.UserEntities.{
-  ClientErrorMessage,
-  Customer,
-  ExistingClient,
-  createNewClient
-}
+import com.finance.Models.UserEntities.{ClientErrorMessage, Customer, ExistingClient, createNewClient}
 import com.finance.Query.postgres.{addNewUser, fetchUser}
+import com.finance.validate.CreateARequest.getJsonRequest
 import com.finance.validate.CustomerInfo.validatePostCode
 import com.github.f4b6a3.uuid.UuidCreator
 import doobie.hikari.HikariTransactor
@@ -41,30 +37,7 @@ object CustomerInfo {
       uri <- IO.fromEither(
         Uri.fromString(s"https://api.postcodes.io/postcodes/$postCode")
       )
-      resp <- ac.use { client =>
-        client.run(Request[IO](Method.GET, uri)).use { response =>
-          response.bodyText.compile.string.map { body =>
-            if (response.status.isSuccess) {
-              // Successful response, attempt to decode JSON
-              println(body)
-              io.circe.parser
-                .decode[PostCodeValidate](body)
-                .fold(
-                  error =>
-                    Left(ClientErrorMessage(s"Failed to decode JSON: $error")),
-                  value => Right(value)
-                )
-            } else {
-              // Unsuccessful response, return an error
-              Left(
-                ClientErrorMessage(
-                  s"Received unsuccessful response: ${response.status.code}"
-                )
-              )
-            }
-          }
-        }
-      }
+      resp <- getJsonRequest(uri)
       _ <- logger.info(s"Validated: ${resp.toString}")
     } yield resp
   }
