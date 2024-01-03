@@ -1,4 +1,4 @@
-name: Dev - Copy DAGs to GCS
+name: Run tests and build/publish Image
 
 on:
   pull_request:

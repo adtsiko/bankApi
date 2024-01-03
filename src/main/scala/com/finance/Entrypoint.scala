@@ -88,7 +88,9 @@ object Entrypoint extends IOApp {
       .withHttpApp(Router("/" -> (routes)).orNotFound)
       .resource
       .use { _ =>
-        initialiseDb() >> IO.pure(println("API started and accessible on port 8080"))
+        initialiseDb() >> IO.pure(
+          println("API started and accessible on port 8080")
+        )
           >> IO.never.as(ExitCode.Success)
 
       }
