@@ -1,0 +1,45 @@
+name: Run tests and build/publish Image
+
+on:
+  pull_request:
+  workflow_dispatch:
+#
+permissions:
+  contents: 'read'
+  id-token: 'write'
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: format check
+        run: sbt scalafmtCheck
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tests
+        run: sbt coverage test
+      - name: Coverage Report
+        run: sbt coverageReport
+
+  build_artifact:
+    needs: [format, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Docker Image
+        run: sbt docker:publishLocal
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Docker Push Image
+        run: |
+          docker tag bank-api:0.1.0 ${{ secrets.DOCKERHUB_USERNAME }}/bank_api_120
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/bank_api_120
+
+

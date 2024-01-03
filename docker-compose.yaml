@@ -13,3 +13,48 @@ services:
       retries: 5
     env_file:
       - local.env
+
+  bank-api:
+    image: bank-api:0.1.0
+    container_name: bank_api
+    ports:
+      - "8080:8080"
+    env_file:
+      - local.env
+
+  scylla-manager:
+    image: scylladb/scylla-manager
+    networks:
+      public:
+    depends_on:
+      - scylla-manager-db
+
+  scylla-manager-db:
+    image: scylladb/scylla
+    volumes:
+      - scylla_manager_db_data:/var/lib/scylla
+    command: --smp 1 --memory 100M
+
+  scylla:
+    build:
+      context: .
+    image: scylladb/scylla-with-agent
+    volumes:
+      - scylla_data:/var/lib/scylla
+    command: --smp 1 --memory 1G
+
+  minio:
+    image: minio/minio
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9001:9000"
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    command: server /data
+
+volumes:
+  minio_data:
+  scylla_data:
+  scylla_manager_db_data:

@@ -2,9 +2,19 @@ package com.finance
 
 import cats.effect.*
 import cats.syntax.all.*
-import com.finance.validate.CustomerInfo.{checkCustomer, fetchCustomer}
-import com.finance.Initialise.given
-import com.finance.Models.Decoders.{Customer, ErrorMessage, User}
+import com.finance.validate.CustomerInfo.{addCustomer, fetchCustomer}
+import com.finance.Initialise.{initialiseDb, given}
+import doobie.Fragment
+import doobie.implicits.*
+import cats.effect.unsafe.implicits.global
+
+import scala.io.Source
+import com.finance.Models.UserEntities.{
+  ClientErrorMessage,
+  Customer,
+  ExistingClient
+}
+import doobie.hikari.HikariTransactor
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
@@ -19,65 +29,71 @@ import scala.concurrent.ExecutionContext
 
 object Entrypoint extends IOApp {
 
-  val getUsers: PublicEndpoint[String, ErrorMessage, User, Any] = endpoint.get
-    .errorOut(jsonBody[ErrorMessage])
-    .in("customers" / "get")
-    .in(query[String]("userid"))
-    .out(jsonBody[User])
+  val getUsers
+      : PublicEndpoint[String, ClientErrorMessage, ExistingClient, Any] =
+    endpoint.get
+      .errorOut(jsonBody[ClientErrorMessage])
+      .in("customers" / "get")
+      .in(query[String]("userid"))
+      .out(jsonBody[ExistingClient])
 
-
-  val createUser: PublicEndpoint[Customer, ErrorMessage, Int, Any] = endpoint.post
-    .errorOut(jsonBody[ErrorMessage])
-    .in("customer" / "add")
-    .in(
-      jsonBody[Customer]
-        .description("New Customer")
-    )
-    .out(jsonBody[Int])
-
+  val createUser: PublicEndpoint[Customer, ClientErrorMessage, Int, Any] =
+    endpoint.post
+      .errorOut(jsonBody[ClientErrorMessage])
+      .in("customer" / "add")
+      .in(
+        jsonBody[Customer]
+          .description("New Customer")
+      )
+      .out(jsonBody[Int])
 
   // server-side logic
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-
+  implicit val ec: ExecutionContext =
+    scala.concurrent.ExecutionContext.Implicits.global
 
   val addCustomerRoutes: HttpRoutes[IO] =
-    Http4sServerInterpreter[IO]().toRoutes{
+    Http4sServerInterpreter[IO]().toRoutes {
       createUser.serverLogic { user =>
         for {
-          res <- checkCustomer(user)
+          res <- addCustomer(user)
         } yield res
       }
-      }
+    }
 
   val getUsersRoutes: HttpRoutes[IO] =
-    Http4sServerInterpreter[IO]().toRoutes{
+    Http4sServerInterpreter[IO]().toRoutes {
       getUsers.serverLogic { userId =>
         fetchCustomer(userId)
 
-      }}
-  // generating and exposing the documentation in yml
+      }
+    }
+
   val swaggerUIRoutes: HttpRoutes[IO] =
     Http4sServerInterpreter[IO]().toRoutes(
-      SwaggerInterpreter().fromEndpoints[IO](List(getUsers, createUser), "The tapir library", "1.0.0")
+      SwaggerInterpreter().fromEndpoints[IO](
+        List(getUsers, createUser),
+        "The tapir library",
+        "1.0.0"
+      )
     )
 
-  val routes: HttpRoutes[IO] = getUsersRoutes <+> addCustomerRoutes <+> swaggerUIRoutes
-
+  val routes: HttpRoutes[IO] =
+    getUsersRoutes <+> addCustomerRoutes <+> swaggerUIRoutes
 
   override def run(args: List[String]): IO[ExitCode] = {
     // starting the server
     BlazeServerBuilder[IO]
       .withExecutionContext(ec)
-      .bindHttp(8080, "localhost")
+      .bindHttp(8080, "0.0.0.0")
       .withHttpApp(Router("/" -> (routes)).orNotFound)
       .resource
-      .use { client =>
-        IO {
-          println("Go to: http://localhost:8080/docs")
-          println("Press any key to exit ...")
-          scala.io.StdIn.readLine()
-        }
+      .use { _ =>
+        initialiseDb() >> IO.pure(
+          println("API started and accessible on port 8080")
+        )
+          >> IO.never.as(ExitCode.Success)
+
       }
-      .as(ExitCode.Success)
+
   }
 }
