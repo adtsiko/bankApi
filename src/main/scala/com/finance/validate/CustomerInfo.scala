@@ -11,7 +11,12 @@ import sttp.tapir.*
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.circe.*
 import com.finance.Models.Decoders.{PostCodeValidate, addressDecoder}
-import com.finance.Models.UserEntities.{ClientErrorMessage, Customer, ExistingClient, createNewClient}
+import com.finance.Models.UserEntities.{
+  ClientErrorMessage,
+  Customer,
+  ExistingClient,
+  createNewClient
+}
 import com.finance.Query.postgres.{addNewUser, fetchUser}
 import com.finance.validate.CreateARequest.getJsonRequest
 import com.finance.validate.CustomerInfo.validatePostCode
