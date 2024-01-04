@@ -7,7 +7,7 @@ import com.finance.Initialise.{initialiseDb, given}
 import doobie.Fragment
 import doobie.implicits.*
 import cats.effect.unsafe.implicits.global
-
+import org.http4s.Status
 import scala.io.Source
 import com.finance.Models.UserEntities.{
   ClientErrorMessage,
@@ -47,6 +47,10 @@ object Entrypoint extends IOApp {
       )
       .out(jsonBody[Int])
 
+  val health: PublicEndpoint[Unit, Unit, String, Any] =
+    endpoint.get
+      .out(jsonBody[String])
+
   // server-side logic
   implicit val ec: ExecutionContext =
     scala.concurrent.ExecutionContext.Implicits.global
@@ -68,6 +72,14 @@ object Entrypoint extends IOApp {
       }
     }
 
+  val getHealthRoutes: HttpRoutes[IO] =
+    Http4sServerInterpreter[IO]().toRoutes {
+      health.serverLogic { _ =>
+        IO.pure(Right("OK"))
+
+      }
+    }
+
   val swaggerUIRoutes: HttpRoutes[IO] =
     Http4sServerInterpreter[IO]().toRoutes(
       SwaggerInterpreter().fromEndpoints[IO](
@@ -78,7 +90,7 @@ object Entrypoint extends IOApp {
     )
 
   val routes: HttpRoutes[IO] =
-    getUsersRoutes <+> addCustomerRoutes <+> swaggerUIRoutes
+    getHealthRoutes <+> getUsersRoutes <+> addCustomerRoutes <+> swaggerUIRoutes
 
   override def run(args: List[String]): IO[ExitCode] = {
     // starting the server
