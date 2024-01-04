@@ -37,7 +37,6 @@ object CustomerInfo {
       ac: Resource[IO, Client[IO]],
       logger: Logger[IO]
   ): IO[Either[ClientErrorMessage, PostCodeValidate]] = {
-    case class managerErrorMessage(msg: String) extends Throwable
 
     for {
       _ <- logger.info("Validating postcode")

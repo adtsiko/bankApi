@@ -25,7 +25,9 @@ object CreateARequest {
                 value => Right(value)
               )
             } else {
-              println(s"Received unsuccessful response: ${response.status.code}")
+              println(
+                s"Received unsuccessful response: ${response.status.code}"
+              )
               Left(
                 catchErr(
                   s"Received unsuccessful response: ${response.status.code}"
