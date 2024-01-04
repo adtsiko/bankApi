@@ -37,13 +37,16 @@ object CustomerInfo {
       ac: Resource[IO, Client[IO]],
       logger: Logger[IO]
   ): IO[Either[ClientErrorMessage, PostCodeValidate]] = {
+
     for {
-      _ <- logger.info("Sending postCode for validation")
+      _ <- logger.info("Validating postcode")
       uri <- IO.fromEither(
         Uri.fromString(s"https://api.postcodes.io/postcodes/$postCode")
       )
-      resp <- getJsonRequest(uri)
-      _ <- logger.info(s"Validated: ${resp.toString}")
+      resp <- getJsonRequest[PostCodeValidate, ClientErrorMessage](
+        uri,
+        ClientErrorMessage.apply
+      )
     } yield resp
   }
 

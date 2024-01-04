@@ -10,25 +10,26 @@ import org.typelevel.log4cats.Logger
 import io.circe.parser.decode
 object CreateARequest {
 
-  def getJsonRequest[A](uri: Uri)(using
-      httpClient: Resource[IO, Client[IO]],
+  def getJsonRequest[A, E <: Throwable](uri: Uri, catchErr: String => E)(using
+      ac: Resource[IO, Client[IO]],
       logger: Logger[IO],
       decoder: Decoder[A]
-  ): IO[Either[ClientErrorMessage, A]] = {
+  ): IO[Either[E, A]] = {
     for {
-      resp <- httpClient.use { client =>
+      resp <- ac.use { client =>
         client.run(Request[IO](Method.GET, uri)).use { response =>
           response.bodyText.compile.string.map { body =>
             if (response.status.isSuccess) {
-              println(body)
               decode[A](body).fold(
-                err => Left(ClientErrorMessage(s"Failed to decode JSON: $err")),
+                err => Left(catchErr(s"Failed to decode JSON: $err")),
                 value => Right(value)
               )
             } else {
-              // Unsuccessful response, return an error
+              println(
+                s"Received unsuccessful response: ${response.status.code}"
+              )
               Left(
-                ClientErrorMessage(
+                catchErr(
                   s"Received unsuccessful response: ${response.status.code}"
                 )
               )

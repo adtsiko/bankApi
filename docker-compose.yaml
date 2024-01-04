@@ -22,26 +22,33 @@ services:
     env_file:
       - local.env
 
-  scylla-manager:
-    image: scylladb/scylla-manager
-    networks:
-      public:
-    depends_on:
-      - scylla-manager-db
-
-  scylla-manager-db:
-    image: scylladb/scylla
+  scylla-node1:
+    container_name: scylla-node1
+    image: scylladb/scylla:5.1.0
+    restart: always
+    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
     volumes:
-      - scylla_manager_db_data:/var/lib/scylla
-    command: --smp 1 --memory 100M
+      - "./scylla/scylla.yaml:/etc/scylla/scylla.yaml"
+      - "./scylla/cassandra-rackdc.properties.dc1:/etc/scylla/cassandra-rackdc.properties"
+      - "./scylla/mutant-data.txt:/mutant-data.txt"
 
-  scylla:
-    build:
-      context: .
-    image: scylladb/scylla-with-agent
-    volumes:
-      - scylla_data:/var/lib/scylla
-    command: --smp 1 --memory 1G
+  scylla-node2:
+      container_name: scylla-node2
+      image: scylladb/scylla:5.1.0
+      restart: always
+      command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+      volumes:
+        - "./scylla/scylla.yaml:/etc/scylla/scylla.yaml"
+        - "./scylla/cassandra-rackdc.properties.dc1:/etc/scylla/cassandra-rackdc.properties"
+
+  scylla-node3:
+      container_name: scylla-node3
+      image: scylladb/scylla:5.1.0
+      restart: always
+      command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+      volumes:
+        - "./scylla/scylla.yaml:/etc/scylla/scylla.yaml"
+        - "./scylla/cassandra-rackdc.properties.dc1:/etc/scylla/cassandra-rackdc.properties"
 
   minio:
     image: minio/minio
