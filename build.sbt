@@ -41,13 +41,18 @@ lazy val root = (project in file("."))
       "com.github.f4b6a3" % "uuid-creator" % "5.3.3",
       "org.typelevel" %% "log4cats-core" % "2.5.0",
       "org.typelevel" %% "log4cats-slf4j" % "2.5.0",
+      "org.slf4j" % "slf4j-api" % "2.0.5",  // SLF4J API
+      "ch.qos.logback" % "logback-classic" % "1.4.12",
       "org.scalatest" %% "scalatest" % "3.2.15",
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
       "com.dimafeng" %% "testcontainers-scala" % testContainerVersion,
       "com.dimafeng" %% "testcontainers-scala-postgresql" % testContainerVersion,
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainerVersion % "test",
       "com.dimafeng" %% "testcontainers-scala-mysql" % testContainerVersion % "test",
-      "org.postgresql" % "postgresql" % "42.5.4"
+      "org.postgresql" % "postgresql" % "42.5.4",
+      "com.google.cloud.bigtable" % "bigtable-client-core" % "1.28.0",
+      "com.google.cloud" % "google-cloud-bigtable-emulator" % "0.167.0"
+
     ),
 
   )

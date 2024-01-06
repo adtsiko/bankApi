@@ -26,33 +26,20 @@ services:
     env_file:
       - local.env
 
-  scylla-node1:
-    container_name: scylla-node1
-    image: scylladb/scylla:5.1.0
-    restart: always
-    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+  bigTable:
+    command: gcloud beta emulators bigtable start --host-port=0.0.0.0:8086
+    hostname: big-table
+    container_name: big-table
+    image: google/cloud-sdk:latest
     volumes:
-      - "./scylla/scylla.yaml:/etc/scylla/scylla.yaml"
-      - "./scylla/cassandra-rackdc.properties.dc1:/etc/scylla/cassandra-rackdc.properties"
-      - "./scylla/mutant-data.txt:/mutant-data.txt"
-
-  scylla-node2:
-      container_name: scylla-node2
-      image: scylladb/scylla:5.1.0
-      restart: always
-      command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
-      volumes:
-        - "./scylla/scylla.yaml:/etc/scylla/scylla.yaml"
-        - "./scylla/cassandra-rackdc.properties.dc1:/etc/scylla/cassandra-rackdc.properties"
-
-  scylla-node3:
-      container_name: scylla-node3
-      image: scylladb/scylla:5.1.0
-      restart: always
-      command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
-      volumes:
-        - "./scylla/scylla.yaml:/etc/scylla/scylla.yaml"
-        - "./scylla/cassandra-rackdc.properties.dc1:/etc/scylla/cassandra-rackdc.properties"
+      - .:/opt/folder_name/my_application:delegated
+    working_dir: /opt/folder_name/my_application
+    environment:
+      - BIGTABLE_EMULATOR_HOST=0.0.0.0:8086
+      - BIGTABLE_PROJECT_ID=cbt-test
+      - BIGTABLE_INSTANCE_ID=finance-gcp-table
+    ports:
+      - 8086:8086
 
   zoo:
     image: confluentinc/cp-zookeeper:7.3.2
@@ -152,7 +139,5 @@ services:
 
 volumes:
   minio_data:
-  scylla_data:
-  scylla_manager_db_data:
 
 

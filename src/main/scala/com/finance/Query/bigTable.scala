@@ -1,3 +1,8 @@
 package com.finance.Query
 
-object scyllaDb {}
+
+object bigTable {
+
+
+
+}
