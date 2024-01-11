@@ -2,19 +2,20 @@
 
 This is a personal project, many of these features in real life would need to be their own microservices.
 
-Aim: Create an API that will take user transactions from a kafka topic and then send them to bigtable instance. 
+## Aim
+Create an API that simulates how a high street bank works
 
-Tech Stack: Kafka, Scala, Docker, bigTable, postgres, (may need a cache), minio
+## Tech Stack
+Kafka, Scala, Docker, bigTable, postgres, (may need a cache[Redis]), minio
 
-Milestone 1: Is define all the requirement and features required to maximise :tick
-Milestone 2: Create the backbone with all tech stacks :tick
+## Milestones
+Milestone 1: Is define all the requirement and features required to maximise :white_check_mark:
+Milestone 2: Create the backbone with all tech stacks  :white_check_mark:
 Milestone 3: Add all features + tests
 Milestone 4: Create an API that will send transactions to kafka to test the durability
 Milestone 5: Setup a cloud infrastructure either in GCP or AWS
 
-
 Milestone 1:
-    What do I want this application to do?
     Users:
         - Create user registration (basic information)
         - Authentication (Will do this after milestone 5)
@@ -50,4 +51,5 @@ Milestone 1:
     Caching: 
         - Implement caching systems for freq accessed data
 
-    (may include rate limiting depends on how much data I can generate, will use small instances in cloud infrastructure + I can't afford big instnces and there's no need)
+> May include rate limiting depends on how much data I can generate, will use small instances in cloud infrastructure + I can't afford big instnces and there's no need
+
