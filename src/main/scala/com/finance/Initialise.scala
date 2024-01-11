@@ -82,7 +82,7 @@ object Initialise {
       for {
         _ <- logger.info("Initialising DB......")
         sqlFileContent <- IO(
-          Source.fromResource("postgresSql/initialisation.sql").mkString
+          Source.fromResource("sql/initialisation.sql").mkString
         )
         sqlString = Fragment.const(sqlFileContent).update
         _ <- sqlString.run.transact(xa)
