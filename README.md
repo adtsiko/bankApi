@@ -9,17 +9,17 @@ Create an API that simulates how a high street bank works
 Kafka, Scala, Docker, bigTable, postgres, (may need a cache[Redis]), minio
 
 ## Milestones
-Milestone 1: Is define all the requirement and features required to maximise :white_check_mark:
-Milestone 2: Create the backbone with all tech stacks  :white_check_mark:
-Milestone 3: Add all features + tests
-Milestone 4: Create an API that will send transactions to kafka to test the durability
-Milestone 5: Setup a cloud infrastructure either in GCP or AWS
+- Milestone 1: Is define all the requirement and features required to maximise :white_check_mark:
+- Milestone 2: Create the backbone with all tech stacks  :white_check_mark:
+- Milestone 3: Add all features + tests
+- Milestone 4: Create an API that will send transactions to kafka to test the durability
+- Milestone 5: Setup a cloud infrastructure either in GCP or AWS
 
 Milestone 1:
     Users:
 
         - Create user registration (basic information)
-        
+
         - Authentication (Will do this after milestone 5)
     Accounts:
         - Types of Accounts (savings, investments, checking)
