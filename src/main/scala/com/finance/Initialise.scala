@@ -2,7 +2,8 @@ package com.finance
 
 import cats.effect.{IO, Resource}
 import doobie.{ExecutionContexts, Fragment}
-import doobie.implicits._
+import doobie.implicits.*
+
 import scala.io.Source
 import doobie.hikari.HikariTransactor
 import org.http4s.client.Client
@@ -15,7 +16,7 @@ import com.google.cloud.bigtable.data.v2.BigtableDataSettings
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest
-import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule
+import fs2.kafka.{AutoOffsetReset, ConsumerSettings, KafkaConsumer}
 
 
 object Initialise {
@@ -29,13 +30,27 @@ object Initialise {
 
   private val gcpProjectId = config.getString("gcp.projectId")
   private val bgTableInstanceId = config.getString("gcp.bgTable.instanceId")
-  private val bigTableSettings = BigtableDataSettings.newBuilder().setProjectId(gcpProjectId).setInstanceId(bgTableInstanceId).build()
-  private val adminBigTableSettings = BigtableTableAdminSettings.newBuilder().setProjectId(gcpProjectId).setInstanceId(bgTableInstanceId).build()
+  private val bigTableSettings = BigtableDataSettings.newBuilder().setProjectId("cbt-test").setInstanceId("finance-gcp-table").build()
+  private val adminBigTableSettings = BigtableTableAdminSettings.newBuilder().setProjectId("cbt-test").setInstanceId("finance-gcp-table").build()
 
+  private val bootStrapStrapServers = config.getString("kafka.bootStrapServers")
+  private val logger = Slf4jLogger.getLogger[IO]
+  val consumerSettings:  ConsumerSettings[IO, String, String]
+  = ConsumerSettings[IO, String, String].withAutoOffsetReset(AutoOffsetReset.Earliest)
+    .withBootstrapServers(bootStrapStrapServers).withGroupId("bank-app")
 
+  given Logger[IO] = Slf4jLogger.getLogger[IO]
+  given  Resource[IO, KafkaConsumer[IO, String, String]] = KafkaConsumer[IO].resource(consumerSettings)
   given Resource[IO, BigtableDataClient] = Resource.make{
-    IO(BigtableDataClient.create(bigTableSettings))
+    try {
+      logger.info("Creating BigTableClient") >>
+        IO(BigtableDataClient.create(bigTableSettings))
+    }catch{
+      case e: Exception => logger.error(e)("Error")
+        IO.raiseError(e)
+    }
   }{ session =>
+    logger.info("Closing BigTableClient") >>
     IO(session.close())
 
   }
@@ -51,7 +66,7 @@ object Initialise {
 
   given transactor: Resource[IO, HikariTransactor[IO]]  =
     for {
-      ce <- ExecutionContexts.fixedThreadPool[IO](16) // our connect EC
+      ce <- ExecutionContexts.fixedThreadPool[IO](16)
       xa <- HikariTransactor.newHikariTransactor[IO](
         "org.postgresql.Driver",
         s"jdbc:postgresql://$dbHost:$dbPort/$dbName",
@@ -60,8 +75,6 @@ object Initialise {
         ce
       )
     } yield xa
-
-  given Logger[IO] = Slf4jLogger.getLogger[IO]
 
   def initialiseDb()(using pgDB: Resource[IO, HikariTransactor[IO]], bTDB: Resource[IO, BigtableTableAdminClient], logger: Logger[IO]): IO[Unit] = {
 
@@ -84,11 +97,12 @@ object Initialise {
           case Left(_) => logger.info(s"Table: ${table.toString} already exists")
           case Right(x) => IO(x)
         }
+        _ <- logger.info(xa.listTables().toString)
 
         _ <- logger.info("BigTable Initialisation complete...")
       } yield ()
     }
-    
+
   }
 
 }

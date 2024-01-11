@@ -4,17 +4,8 @@ import cats.effect.*
 import cats.syntax.all.*
 import com.finance.validate.CustomerInfo.{addCustomer, fetchCustomer}
 import com.finance.Initialise.{initialiseDb, given}
-import doobie.Fragment
-import doobie.implicits.*
-import cats.effect.unsafe.implicits.global
-import org.http4s.Status
-import scala.io.Source
-import com.finance.Models.UserEntities.{
-  ClientErrorMessage,
-  Customer,
-  ExistingClient
-}
-import doobie.hikari.HikariTransactor
+import com.finance.Kafka.Transactions.consumeTransactions
+import com.finance.Models.UserEntities.{ClientErrorMessage, Customer, ExistingClient}
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
@@ -49,6 +40,7 @@ object Entrypoint extends IOApp {
 
   val health: PublicEndpoint[Unit, Unit, String, Any] =
     endpoint.get
+      .in("")
       .out(jsonBody[String])
 
   // server-side logic
@@ -112,8 +104,8 @@ object Entrypoint extends IOApp {
 
         } >> IO.pure(
           println("API started and accessible on port 8080")
-        )
-          >> IO.never.as(ExitCode.Success)
+        ) >> consumeTransactions().start
+        >> IO.never.as(ExitCode.Success)
 
       }
 

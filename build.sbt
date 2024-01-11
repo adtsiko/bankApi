@@ -51,7 +51,10 @@ lazy val root = (project in file("."))
       "com.dimafeng" %% "testcontainers-scala-mysql" % testContainerVersion % "test",
       "org.postgresql" % "postgresql" % "42.5.4",
       "com.google.cloud.bigtable" % "bigtable-client-core" % "1.28.0",
-      "com.google.cloud" % "google-cloud-bigtable-emulator" % "0.167.0"
+//      "com.google.cloud" % "google-cloud-bigtable-emulator" % "0.167.0",
+      "org.apache.kafka" % "kafka-clients" % "3.4.0",
+      "org.apache.kafka" % "kafka-streams" % "3.4.0",
+      "com.github.fd4s" %% "fs2-kafka" % "3.2.0"
 
     ),
 

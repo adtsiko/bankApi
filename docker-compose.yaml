@@ -25,19 +25,22 @@ services:
       retries: 5
     env_file:
       - local.env
+    depends_on:
+      - bigTable
+      - kafka1
 
   bigTable:
-    command: gcloud beta emulators bigtable start --host-port=0.0.0.0:8086
     hostname: big-table
     container_name: big-table
-    image: google/cloud-sdk:latest
+    image: ssivart/bigtable-emulator:v2021.08
     volumes:
       - .:/opt/folder_name/my_application:delegated
     working_dir: /opt/folder_name/my_application
     environment:
-      - BIGTABLE_EMULATOR_HOST=0.0.0.0:8086
-      - BIGTABLE_PROJECT_ID=cbt-test
-      - BIGTABLE_INSTANCE_ID=finance-gcp-table
+      - BIGTABLE_SCHEMA=transactions:user#amount
+      - BIGTABLE_PROJECT=cbt-test
+      - BIGTABLE_INSTANCE=finance-gcp-table
+      - BIGTABLE_EMULATOR_HOST=big-table:8086
     ports:
       - 8086:8086
 
@@ -89,24 +92,31 @@ services:
         KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
       depends_on:
         - zoo
-
-
   kafka3:
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka3
+    container_name: kafka3
+    ports:
+      - "9094:9094"
+      - "29094:29094"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3:19094,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9094,DOCKER://host.docker.internal:29094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zoo:2181"
+      KAFKA_BROKER_ID: 3
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    depends_on:
+        - zoo
+
+
+  kafka-setup:
       image: confluentinc/cp-kafka:7.3.2
-      hostname: kafka3
-      container_name: kafka3
-      ports:
-        - "9094:9094"
-        - "29094:29094"
-      environment:
-        KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3:19094,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9094,DOCKER://host.docker.internal:29094
-        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
-        KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-        KAFKA_ZOOKEEPER_CONNECT: "zoo:2181"
-        KAFKA_BROKER_ID: 3
-        KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
-        KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
-        KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      hostname: kafka-setup
+      container_name: kafka-setup
+      command: kafka-topics --create --if-not-exists --bootstrap-server kafka2:29093 --partitions 1 --replication-factor 1 --topic transactions
       depends_on:
         - zoo
 
