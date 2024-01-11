@@ -6,7 +6,7 @@ This is a personal project, many of these features in real life would need to be
 Create an API that simulates how a high street bank works
 
 ## Tech Stack
-Kafka, Scala, Docker, bigTable, postgres, (may need a cache[Redis]), minio
+Kafka, Scala, Docker, bigTable, postgres, *redis, minio
 
 ## Milestones
 - Milestone 1: Is define all the requirement and features required to maximise :white_check_mark:
