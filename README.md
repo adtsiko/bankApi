@@ -17,7 +17,9 @@ Milestone 5: Setup a cloud infrastructure either in GCP or AWS
 
 Milestone 1:
     Users:
+
         - Create user registration (basic information)
+        
         - Authentication (Will do this after milestone 5)
     Accounts:
         - Types of Accounts (savings, investments, checking)
