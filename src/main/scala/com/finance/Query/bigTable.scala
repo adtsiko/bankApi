@@ -6,20 +6,38 @@ import com.google.cloud.bigtable.data.v2.models.{Query, RowMutation}
 import com.google.protobuf.ByteString
 object bigTable {
 
-  def readToTable(data: (String, String))(using db: Resource[IO, BigtableDataClient]): IO[Unit] = {
-    db.use{ xa =>
+  def readToTable(
+      data: (String, String)
+  )(using db: Resource[IO, BigtableDataClient]): IO[Unit] = {
+    db.use { xa =>
       val readRowsRequest = Query.create("transactions").limit(10)
-      val query = Query.create("transactions").prefix("phone")
+      val query = Query.create("transactions").prefix("userId")
       IO(xa.readRows(query).forEach(b => println(b.getCells("cf1").get(0))))
     }
   }
 
-  def writeToTable(data: (String, String))(using db: Resource[IO, BigtableDataClient]): IO[Unit] = {
+  def writeToTable(
+      data: (String, String)
+  )(using db: Resource[IO, BigtableDataClient]): IO[Unit] = {
     db.use { xa =>
-      val rowMutation = RowMutation.create("transactions", s"phone-${data._1}").setCell("user", ByteString.copyFromUtf8("cf1"), ByteString.copyFromUtf8(data._2))
+      val rowMutation = RowMutation
+        .create("transactions", s"${data._1}")
+        .setCell(
+          "user",
+          ByteString.copyFromUtf8("cf1"),
+          ByteString.copyFromUtf8(data._2)
+        )
       IO(xa.mutateRow(rowMutation))
 
     }
   }
+
+}
+
+object consolidateBalance {
+
+  def updatePostgresBalance() = ???
+
+  def updatePendingBalance() = ???
 
 }

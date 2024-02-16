@@ -1,19 +1,19 @@
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import com.finance.Query.postgres.addNewUser
-import com.finance.Models.UserEntities.{
-  Customer,
-  ExistingClient,
-  createNewClient
-}
+import com.finance.Query.postgres.insertRegistrationQuery
+import com.finance.Models.UserModels.{Address, Occupation, ExistingClient, createNewClient, UserRegistrationBody}
 import cats.effect.{IO, Resource}
 import cats.effect.unsafe.implicits.global
-import com.finance.Initialise.initialiseDb
 import doobie.ExecutionContexts
 import doobie.implicits.*
 import doobie.hikari.HikariTransactor
 import doobie.implicits.toSqlInterpolator
+import com.finance.Models.UserModels.Occupation
+import com.finance.Initialise.initialisePostgresDb
+import cats.implicits._
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 class UserManagerQueries
     extends AnyFlatSpec
@@ -37,26 +37,38 @@ class UserManagerQueries
       )
     } yield xa
 
+  implicit val  logger: Logger[IO] = Slf4jLogger.getLogger[IO]
+
   "addNewUser" should "insert a new user into the database" in {
 
     val newUser = createNewClient(
-      Customer(
-        "James",
-        "Patrick",
-        "james_stpatrick@gmail.com",
-        "15 Hatton Gardens",
-        "London",
-        "EC1N8JT",
-        24,
-        700
+      UserRegistrationBody(
+          "Mr",
+          "James",
+          "Patrick",
+          "james_stpatrick@gmail.com",
+          44749109413L,
+          Address(
+            "15 Hatton Gardens",
+            "LONDON",
+            "EC1N8JT"
+          ),
+         Occupation(
+            "Data Engineer",
+            90374,
+            "Energy"
+          ),
+        "Married",
+       true,
+        53
       )
     )
 
     val b = for {
-      _ <- initialiseDb()
-      _ <- addNewUser(newUser)(using tranAc)
+      _ <- initialisePostgresDb()
+      _ <- insertRegistrationQuery(newUser._1, newUser._3, newUser._2)(using tranAc)
       user <- tranAc.use { xa =>
-        sql"SELECT * FROM users WHERE userid = 'f483caa6-0597-5581-a3dd-8218ecd2ff86'"
+        sql"SELECT * FROM users WHERE userid = '58bbc77a-b7cb-5c65-9fe2-9c253f745996'"
           .query[ExistingClient]
           .option
           .transact(xa)
@@ -68,12 +80,12 @@ class UserManagerQueries
     val result: ExistingClient =
       b.unsafeRunSync().getOrElse(fail("User not found"))
     result shouldBe ExistingClient(
-      userId = "f483caa6-0597-5581-a3dd-8218ecd2ff86",
-      name = "James Patrick",
+      userId = "58bbc77a-b7cb-5c65-9fe2-9c253f745996",
+      title = "Mr",
+      firstName = "James",
+      lastName = "Patrick",
       emailAddress = "james_stpatrick@gmail.com",
-      region = "London",
-      age = 24,
-      creditScore = 700
+      age = 53
     )
   }
 }
