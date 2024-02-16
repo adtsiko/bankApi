@@ -2,7 +2,13 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import com.finance.Query.postgres.insertRegistrationQuery
-import com.finance.Models.UserModels.{Address, Occupation, ExistingClient, createNewClient, UserRegistrationBody}
+import com.finance.Models.UserModels.{
+  Address,
+  Occupation,
+  ExistingClient,
+  createNewClient,
+  UserRegistrationBody
+}
 import cats.effect.{IO, Resource}
 import cats.effect.unsafe.implicits.global
 import doobie.ExecutionContexts
@@ -37,36 +43,38 @@ class UserManagerQueries
       )
     } yield xa
 
-  implicit val  logger: Logger[IO] = Slf4jLogger.getLogger[IO]
+  implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   "addNewUser" should "insert a new user into the database" in {
 
     val newUser = createNewClient(
       UserRegistrationBody(
-          "Mr",
-          "James",
-          "Patrick",
-          "james_stpatrick@gmail.com",
-          44749109413L,
-          Address(
-            "15 Hatton Gardens",
-            "LONDON",
-            "EC1N8JT"
-          ),
-         Occupation(
-            "Data Engineer",
-            90374,
-            "Energy"
-          ),
+        "Mr",
+        "James",
+        "Patrick",
+        "james_stpatrick@gmail.com",
+        44749109413L,
+        Address(
+          "15 Hatton Gardens",
+          "LONDON",
+          "EC1N8JT"
+        ),
+        Occupation(
+          "Data Engineer",
+          90374,
+          "Energy"
+        ),
         "Married",
-       true,
+        true,
         53
       )
     )
 
     val b = for {
       _ <- initialisePostgresDb()
-      _ <- insertRegistrationQuery(newUser._1, newUser._3, newUser._2)(using tranAc)
+      _ <- insertRegistrationQuery(newUser._1, newUser._3, newUser._2)(using
+        tranAc
+      )
       user <- tranAc.use { xa =>
         sql"SELECT * FROM users WHERE userid = '58bbc77a-b7cb-5c65-9fe2-9c253f745996'"
           .query[ExistingClient]

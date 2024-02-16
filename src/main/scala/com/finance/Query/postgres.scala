@@ -36,7 +36,12 @@ object postgres {
     def insertIntoAddress() = {
       Update[(String, String, String, String)](s"""
        INSERT INTO users_address (userid, firstlineaddress, region, postcode) VALUES (?, ?, ?, ?);
-      """).run(user.userId.toString, address.firstLineAddress, address.region, address.region)
+      """).run(
+        user.userId.toString,
+        address.firstLineAddress,
+        address.region,
+        address.region
+      )
     }
     def insertIntoOccupation() = {
       Update[(String, String, String, Int)]("""
@@ -51,8 +56,7 @@ object postgres {
       DELETE FROM users_occupation WHERE userid = ${user.userId.toString};
       """
     }
-    println(address.toString())
-    println(insertIntoAddress())
+
     val query = for {
       maybeInsertedUser <- insertIntoUsers()
       maybeInsertedAddress <- insertIntoAddress()
@@ -67,7 +71,9 @@ object postgres {
             _ <- logger.info("Failed to insert users")
             query <- IO(deleteInserts())
             _ <- query.update.run.transact(xa)
-          } yield Left(RegistrationErrorMessage(s"Failed to Insert User: '${user.userId}'"))
+          } yield Left(
+            RegistrationErrorMessage(s"Failed to Insert User: '${user.userId}'")
+          )
       }
     }
   }

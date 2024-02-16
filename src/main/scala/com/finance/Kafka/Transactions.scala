@@ -20,7 +20,7 @@ object Transactions {
   private val withdrawalTopic: String =
     config.getString("kafka.topic.withdrawalsTopic")
   val withdrawalTable: String = config.getString("gcp.bgTable.withdrawalsTable")
-  
+
   def consumeTransfers()(using
       kafka: Resource[IO, KafkaConsumer[IO, String, String]],
       logger: Logger[IO],

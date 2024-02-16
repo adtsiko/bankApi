@@ -117,7 +117,7 @@ object Initialise {
       logger: Logger[IO]
   ): IO[Unit] = {
 
-   bTDB.use { xa =>
+    bTDB.use { xa =>
       for {
         _ <- logger.info("Initialising BigTable......")
         tables <- IO(
