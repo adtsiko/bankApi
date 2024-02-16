@@ -3,9 +3,18 @@ package com.finance
 import cats.effect.*
 import cats.syntax.all.*
 import com.finance.validate.CustomerInfo.{addCustomer, fetchCustomer}
-import com.finance.Initialise.{initialiseDb, given}
-import com.finance.Kafka.Transactions.consumeTransactions
-import com.finance.Models.UserEntities.{ClientErrorMessage, Customer, ExistingClient}
+import com.finance.Initialise.{initialiseBigTable, initialisePostgresDb, given}
+import com.finance.Kafka.Transactions.{
+  consumeDeposits,
+  consumeTransfers,
+  consumeWithdrawals
+}
+import com.finance.Models.UserModels.{
+  ClientErrorMessage,
+  UserRegistrationBody,
+  ExistingClient,
+  RegistrationErrorMessage
+}
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
@@ -28,15 +37,20 @@ object Entrypoint extends IOApp {
       .in(query[String]("userid"))
       .out(jsonBody[ExistingClient])
 
-  val createUser: PublicEndpoint[Customer, ClientErrorMessage, Int, Any] =
+  val createUser: PublicEndpoint[
+    UserRegistrationBody,
+    RegistrationErrorMessage,
+    String,
+    Any
+  ] =
     endpoint.post
-      .errorOut(jsonBody[ClientErrorMessage])
+      .errorOut(jsonBody[RegistrationErrorMessage])
       .in("customer" / "add")
       .in(
-        jsonBody[Customer]
+        jsonBody[UserRegistrationBody]
           .description("New Customer")
       )
-      .out(jsonBody[Int])
+      .out(jsonBody[String])
 
   val health: PublicEndpoint[Unit, Unit, String, Any] =
     endpoint.get
@@ -92,8 +106,8 @@ object Entrypoint extends IOApp {
       .withHttpApp(Router("/" -> (routes)).orNotFound)
       .resource
       .use { _ =>
-        initialiseDb() >> IO.pure {
-          println{
+        initialiseBigTable() >> initialisePostgresDb() >> IO.pure {
+          println {
             """||||||||||||           |||          |||||   ||||   |||  |||
                ||||     |||         ||| |||        ||||||| ||||   ||| |||
                ||||||||||||       ||||  |||||      |||| |||||||   |||||
@@ -104,8 +118,8 @@ object Entrypoint extends IOApp {
 
         } >> IO.pure(
           println("API started and accessible on port 8080")
-        ) >> consumeTransactions().start
-        >> IO.never.as(ExitCode.Success)
+        ) >> consumeTransfers().start >> consumeDeposits().start >> consumeWithdrawals().start
+          >> IO.never.as(ExitCode.Success)
 
       }
 

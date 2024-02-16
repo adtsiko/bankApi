@@ -111,15 +111,6 @@ services:
     depends_on:
         - zoo
 
-
-  kafka-setup:
-      image: confluentinc/cp-kafka:7.3.2
-      hostname: kafka-setup
-      container_name: kafka-setup
-      command: kafka-topics --create --if-not-exists --bootstrap-server kafka2:29093 --partitions 1 --replication-factor 1 --topic transactions
-      depends_on:
-        - zoo
-
   kafka-schema-registry:
       image: confluentinc/cp-schema-registry:7.3.2
       hostname: kafka-schema-registry

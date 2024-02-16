@@ -2,7 +2,7 @@ package com.finance.validate
 
 import cats.effect.{IO, Resource}
 import com.finance.Models.Decoders.PostCodeValidate
-import com.finance.Models.UserEntities.ClientErrorMessage
+import com.finance.Models.UserModels.ClientErrorMessage
 import io.circe.Decoder
 import org.http4s.{Method, Request, Uri}
 import org.http4s.client.Client
