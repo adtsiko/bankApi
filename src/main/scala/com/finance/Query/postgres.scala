@@ -84,7 +84,7 @@ object postgres {
     xa.use { client =>
       for {
         query <- IO(
-          sql"SELECT * FROM users where userid=$userId"
+          sql"SELECT * FROM users WHERE userid=$userId"
             .query[ExistingClient]
             .option
         )

@@ -2,7 +2,7 @@ package com.finance.Kafka
 
 import cats.effect.{IO, Resource}
 import fs2.kafka.*
-import com.finance.Initialise.{config, consumerSettings}
+import com.finance.Initialise.config
 import com.finance.Query.bigTable.writeToTable
 import com.google.cloud.bigtable.data.v2.BigtableDataClient
 import fs2.Stream
@@ -22,41 +22,58 @@ object Transactions {
   val withdrawalTable: String = config.getString("gcp.bgTable.withdrawalsTable")
 
   def consumeTransfers()(using
-      kafka: Resource[IO, KafkaConsumer[IO, String, String]],
+      consumerSett: ConsumerSettings[IO, String, String],
+      producerSett: ProducerSettings[IO, String, String],
       logger: Logger[IO],
       db: Resource[IO, BigtableDataClient]
   ): IO[Unit] = {
 
     val stream =
       KafkaConsumer
-        .stream(consumerSettings)
+        .stream(consumerSett)
         .subscribeTo(transfersTopic)
         .partitionedRecords
         .map { partitionStream =>
           partitionStream.evalMap { committable =>
-            processRecord(committable.record)
+            processTransfer(committable.record).handleErrorWith { err =>
+              logger.error(
+                s"Failed to process record: ${committable.record.key}. Error: $err"
+              )
+              sendToDeadLetterQueue(
+                committable.record,
+                s"${transfersTopic}-dlq"
+              ).as(committable)
+            }
           }
         }
         .parJoinUnbounded
-        .repeat
 
     stream.compile.drain
   }
 
   def consumeWithdrawals()(using
-      kafka: Resource[IO, KafkaConsumer[IO, String, String]],
+      consumerSett: ConsumerSettings[IO, String, String],
+      producerSett: ProducerSettings[IO, String, String],
       logger: Logger[IO],
       db: Resource[IO, BigtableDataClient]
   ): IO[Unit] = {
 
     val stream =
       KafkaConsumer
-        .stream(consumerSettings)
+        .stream(consumerSett)
         .subscribeTo(withdrawalTopic)
         .partitionedRecords
         .map { partitionStream =>
           partitionStream.evalMap { committable =>
-            processRecord(committable.record)
+            processRecord(committable.record).handleErrorWith { err =>
+              logger.error(
+                s"Failed to process record: ${committable.record.key}. Error: $err"
+              )
+              sendToDeadLetterQueue(
+                committable.record,
+                s"${withdrawalTopic}-dlq"
+              ).as(committable)
+            }
           }
         }
         .parJoinUnbounded
@@ -66,19 +83,26 @@ object Transactions {
   }
 
   def consumeDeposits()(using
-      kafka: Resource[IO, KafkaConsumer[IO, String, String]],
+      consumerSett: ConsumerSettings[IO, String, String],
+      producerSett: ProducerSettings[IO, String, String],
       logger: Logger[IO],
       db: Resource[IO, BigtableDataClient]
   ): IO[Unit] = {
 
     val stream =
       KafkaConsumer
-        .stream(consumerSettings)
+        .stream(consumerSett)
         .subscribeTo(depositsTopic)
         .partitionedRecords
         .map { partitionStream =>
           partitionStream.evalMap { committable =>
-            processRecord(committable.record)
+            processRecord(committable.record).handleErrorWith { err =>
+              logger.error(
+                s"Failed to process record: ${committable.record.key}. Error: $err"
+              )
+              sendToDeadLetterQueue(committable.record, s"${depositsTopic}-dlq")
+                .as(committable)
+            }
           }
         }
         .parJoinUnbounded
@@ -94,4 +118,34 @@ object Transactions {
     logger.info(s"Processing record: $message")
     writeToTable((record.key, record.value))
 
+  def processTransfer(
+      record: ConsumerRecord[String, String]
+  )(using
+      logger: Logger[IO],
+      db: Resource[IO, BigtableDataClient]
+  ): IO[Unit] = {
+    val parsedValue: IO[Int] = IO {
+      record.value.toInt
+    }.handleErrorWith { (_: Throwable) =>
+      IO.raiseError(new RuntimeException("Invalid record value"))
+    }
+    parsedValue.flatMap { value =>
+      writeToTable((record.key, value.toString)).handleErrorWith { err =>
+        logger.error(
+          s"Failed to write to table for key: ${record.key}. Error: $err"
+        ) *>
+          IO.raiseError(err)
+      }
+    }
+  }
+
+  def sendToDeadLetterQueue(
+      badRecord: ConsumerRecord[String, String],
+      deadLetterQueue: String
+  )(using producerSett: ProducerSettings[IO, String, String]): IO[Unit] =
+    KafkaProducer[IO].resource(producerSett).use { producer =>
+      val msg = ProducerRecord(deadLetterQueue, badRecord.key, badRecord.value)
+      val wrapMsg = ProducerRecords.one(msg)
+      producer.produce((wrapMsg)).void
+    }
 }
