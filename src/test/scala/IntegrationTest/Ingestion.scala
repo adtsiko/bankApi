@@ -47,7 +47,7 @@ class Ingestion
     with BeforeAndAfterAll {
 
   override val container: DockerComposeContainer = DockerComposeContainer(
-    Seq(new File("docker-compose.yaml")),
+    Seq( new File(getClass.getClassLoader.getResource("docker-compose.yaml").getPath)),
     waitingFor = Some(
       WaitingForService(
         "kafka1",
