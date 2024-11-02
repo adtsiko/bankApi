@@ -17,7 +17,12 @@ import com.google.cloud.bigtable.data.v2.BigtableDataSettings
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest
-import fs2.kafka.{AutoOffsetReset, ConsumerSettings, ProducerSettings, KafkaConsumer}
+import fs2.kafka.{
+  AutoOffsetReset,
+  ConsumerSettings,
+  ProducerSettings,
+  KafkaConsumer
+}
 
 object Initialise {
 
@@ -56,8 +61,9 @@ object Initialise {
       .withBootstrapServers(bootStrapStrapServers)
       .withGroupId("bank-app")
 
-  given ProducerSettings[IO, String, String] = ProducerSettings[IO, String, String]
-    .withBootstrapServers(bootStrapStrapServers)
+  given ProducerSettings[IO, String, String] =
+    ProducerSettings[IO, String, String]
+      .withBootstrapServers(bootStrapStrapServers)
   given Logger[IO] = Slf4jLogger.getLogger[IO]
 
   given Resource[IO, BigtableDataClient] = Resource.make {
