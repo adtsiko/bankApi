@@ -17,7 +17,7 @@ import com.google.cloud.bigtable.data.v2.BigtableDataSettings
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest
-import fs2.kafka.{AutoOffsetReset, ConsumerSettings, KafkaConsumer}
+import fs2.kafka.{AutoOffsetReset, ConsumerSettings, ProducerSettings, KafkaConsumer}
 
 object Initialise {
 
@@ -28,12 +28,12 @@ object Initialise {
   private val dbPassword = config.getString("db.password")
   private val dbPort = config.getInt("db.port")
 
-  private val gcpProjectId = config.getString("gcp.projectId")
-  private val bgTableInstanceId = config.getString("gcp.bgTable.instanceId")
-  private val withdrawalTable = config.getString("gcp.bgTable.withdrawalsTable")
-  private val depositsTable = config.getString("gcp.bgTable.depositsTable")
-  private val transferTable = config.getString("gcp.bgTable.transfersTable")
-  private val bigtableTables =
+  val gcpProjectId = config.getString("gcp.projectId")
+  val bgTableInstanceId = config.getString("gcp.bgTable.instanceId")
+  val withdrawalTable = config.getString("gcp.bgTable.withdrawalsTable")
+  val depositsTable = config.getString("gcp.bgTable.depositsTable")
+  val transferTable = config.getString("gcp.bgTable.transfersTable")
+  val bigtableTables =
     List(withdrawalTable, depositsTable, transferTable)
 
   private val bootStrapStrapServers = config.getString("kafka.bootStrapServers")
@@ -50,15 +50,16 @@ object Initialise {
     .build()
 
   private val logger = Slf4jLogger.getLogger[IO]
-  val consumerSettings: ConsumerSettings[IO, String, String] =
+  given ConsumerSettings[IO, String, String] =
     ConsumerSettings[IO, String, String]
       .withAutoOffsetReset(AutoOffsetReset.Earliest)
       .withBootstrapServers(bootStrapStrapServers)
       .withGroupId("bank-app")
 
+  given ProducerSettings[IO, String, String] = ProducerSettings[IO, String, String]
+    .withBootstrapServers(bootStrapStrapServers)
   given Logger[IO] = Slf4jLogger.getLogger[IO]
-  given Resource[IO, KafkaConsumer[IO, String, String]] =
-    KafkaConsumer[IO].resource(consumerSettings)
+
   given Resource[IO, BigtableDataClient] = Resource.make {
     try {
       logger.info("Creating BigTableClient") >>

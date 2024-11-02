@@ -1,7 +1,7 @@
 package com.finance.Models
 
 import com.github.f4b6a3.uuid.UuidCreator
-import doobie.Write
+import doobie.{Write, Read}
 import doobie.postgres.implicits._
 import java.util.UUID
 
